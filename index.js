@@ -1,6 +1,11 @@
-const {canHandle, getSlotValueByName } = require('ask-utils')
+const {canHandle, getSlotValueByName } = require('ask-utils');
+const AWS = require('aws-sdk');
+AWS.config.loadFromPath('./rootkey.json');
+AWS.config.update({region: 'ap-northeast-1'});
+const s3 = new AWS.S3();
+const dstBucket = process.env.S3_BUCKET_NAME;
 const Alexa = require('ask-sdk-core');
-const HELP_MESSAGE = '半田市の観光スポットの行き方、イベント情報、遊べる場所や家族でいける場所など観光に関する情報を教えます！どこどこに行きたい！のように聞いてみてね！';
+const HELP_MESSAGE = '半田市の観光スポットの行き方、イベント情報、遊べる場所や家族でいける場所など観光に関する情報を教えます！どこどこに行きたい！のように聞いてください！';
 const STOP_MESSAGE = 'またお願いしますね！';
 
 /* csvの読み込み */
@@ -37,6 +42,8 @@ exports.handler = async function (event, context) {
                 KankoAreaHandler,
                 HelloHandler,
                 ChoiceHandler,
+                PreviousHandler,
+                NextHandler,
                 HelpIntentHandler,
                 ExitHandler,
                 Exit2Handler,
@@ -108,8 +115,7 @@ const KankoAreaHandler = {
                     const moyoriarray = [JSON.parse(moyori.getBody('utf8'))["response"]["station"][0]];
                     const moyoridistance = moyoriarray[0]["distance"];
                     const moyorim = moyoridistance.split("m");
-                    const moyoriminutes = moyorim[0]/60
-                    console.log(moyoriminutes);
+                    const moyoriminutes = moyorim[0]/60;
                     message = res[a][3] + "は"+ moyoriarray[0]["line"] + moyoriarray[0]["name"] + "駅から" + moyoriarray[0]["distance"] + "。徒歩で" + Math.ceil(moyoriminutes) + "分です。他に聞きたいことがあれば、もう一度。なければストップと言ってください";
                     image = res[a][14];
                     content = moyoriarray[0]["line"] + moyoriarray[0]["name"] + "駅から" + moyoriarray[0]["distance"] + "。徒歩で" + Math.ceil(moyoriminutes) + "分";
@@ -123,10 +129,10 @@ const KankoAreaHandler = {
                 }
             }
             console.log("用語非対応:" + area);
-            log_message = "用語非対応:" + area;
         }
         else{
             console.log("対応なし");
+            log_message = "対応なし";
             message = "申し訳ありません。もう一度お願いいたします。";
             const xzahyou = res[1][9];
             const yzahyou = res[1][8];
@@ -139,6 +145,7 @@ const KankoAreaHandler = {
 
         if (supportsDisplay(handlerInput) ) {
             const title = '最寄り駅情報';
+            if(log_message === "")log_message = "用語非対応:" + area;
             const backgroundImage = new Alexa.ImageHelper()
                 .addImageInstance(image)
                 .getImage();
@@ -154,11 +161,18 @@ const KankoAreaHandler = {
                 textContent: textContent,
                 token: token,
             });
-            return handlerInput.responseBuilder
-                .speak(message)
-                .reprompt(message)
-                .getResponse();
+            return new Promise((resolve) => {
+                readFromS3().then(function(result){
+                    writeToS3(result.Body.toString(), log_message).then(() => {
+                        resolve(handlerInput.responseBuilder
+                            .speak(message)
+                            .reprompt(message)
+                            .getResponse());
+                    });
+                });
+            });
         }
+        log_message = "用語非対応:" + area;
         console.log("用語非対応:" + area);
         return handlerInput.responseBuilder
             .speak(message)
@@ -175,6 +189,7 @@ const ElementSelected = {
     },async handle (handlerInput){
         let speechText = "新美南吉の自筆原稿や書簡などを収蔵・展示する記念文学館。「ごんぎつね」の舞台となった地に建てられています。より詳しい情報はこちらのキューアールコードにてホームページを参照してください";
         let urlimage = "";
+        let log_message = "";
         switch (handlerInput.requestEnvelope.request.token) {
             case "一番":
                 speechText = first_description;
@@ -191,6 +206,7 @@ const ElementSelected = {
         }
 
         const title = firstmessage;
+        log_message = "選択されたもの" + title;
         console.log("選択されたもの" + title);
         const backgroundImage = new Alexa.ImageHelper()
             .addImageInstance(urlimage)
@@ -218,10 +234,12 @@ const CategoryHandler = {
       const category = getSlotValueByName(handlerInput, 'ca');
       const message = "オススメのスポットが三つ見つかりました。画面にタッチするか、1番,2番,3番と番号を話してください。";
       const title = 'オススメの観光スポット';
+      let log_message = "";
       let template = create_background_img(firsturl, title);
 
         if(category === "カップル"){
             console.log("観光分岐:カップル");
+            log_message = "観光分岐:カップル";
             firsturl = "https://s3-ap-northeast-1.amazonaws.com/hnd-kanko/6_nakikinen.JPG";
             firstmessage = "新美南吉記念館";
             first_description = "新美南吉の自筆原稿や書簡などを収蔵・展示する記念文学館。「ごんぎつね」の舞台となった地に建てられています。童話の森には、文学碑や作品に登場する植物が観察できる遊歩道があります。";
@@ -234,6 +252,7 @@ const CategoryHandler = {
             template = create_three_images(firstmessage,secondmessage,thirdmessage,firsturl,secondurl,thirdurl);
         }else if(category === "見る"){
             console.log("観光分岐:見る");
+            log_message = "観光分岐:見る";
             firsturl = res[1][14];
             firstmessage = res[1][3];
             first_description = res[1][10];
@@ -246,6 +265,7 @@ const CategoryHandler = {
             template = create_three_images(firstmessage,secondmessage,thirdmessage,firsturl,secondurl,thirdurl);
         }else if(category === "遊ぶ"){
             console.log("観光分岐:遊ぶ");
+            log_message = "観光分岐:遊ぶ";
             firsturl = res[1][14];
             firstmessage = res[1][3];
             first_description = res[1][10];
@@ -258,19 +278,26 @@ const CategoryHandler = {
             template = create_three_images(firstmessage,secondmessage,thirdmessage,firsturl,secondurl,thirdurl);
         }else if(category === "食べる"){
             console.log("観光分岐:食べる");
+            log_message = "観光分岐:食べる";
         }else if(category === "歴史"){
             console.log("観光分岐:歴史");
+            log_message = "観光分岐:歴史";
         }else if(category === "公園"){
             console.log("観光分岐:公園");
+            log_message = "観光分岐:公園";
         }else if(category === "美術館"){
             console.log("観光分岐:美術館");
+            log_message = "観光分岐:美術館";
         }else if(category === "体験"){
             console.log("観光分岐:体験");
+            log_message = "観光分岐:体験";
         }else if(category === "温泉"){
             console.log("観光分岐:温泉");
+            log_message = "観光分岐:温泉";
         }
         else{
             console.log("該当のスポット無し:" + category);
+            log_message = "該当のスポット無し:" + category;
             firsturl = res[1][14];
             firstmessage = res[1][3];
             first_description = res[1][10];
@@ -306,6 +333,7 @@ const EventHandler = {
         let eventslist = [];
         let eventstime = [];
         let imageurl = [];
+        let log_message = "";
         let client = require('cheerio-httpcli');
         let result = await client.fetch('https://www.handa-kankou.com/event/')
             .then(function (result) {
@@ -322,6 +350,7 @@ const EventHandler = {
                 });
                 return [eventslist,eventstime,imageurl];
             }).then(function (result){
+                log_message = "観光分岐:見る";
                 console.log(result[0]);
                 return result
             });
@@ -389,6 +418,7 @@ const ChoiceHandler = {
             return handlerInput.responseBuilder
                 .speak(message)
                 .reprompt(message)
+                .withShouldEndSession(true)
                 .getResponse();
         }
     }
@@ -406,6 +436,28 @@ const HelpIntentHandler = {
             .reprompt(speechText)
             .withSimpleCard("半田市観光案内", speechText)
             .getResponse()
+    }
+};
+
+const NextHandler = { canHandle(handlerInput) {
+    return canHandle(handlerInput, 'IntentRequest', 'AMAZON.NextIntent')
+},
+    handle(handlerInput) {
+        return handlerInput.responseBuilder
+            .speak(HELP_MESSAGE)
+            .reprompt(HELP_MESSAGE)
+            .getResponse();
+    }
+};
+
+const PreviousHandler = { canHandle(handlerInput) {
+    return canHandle(handlerInput, 'IntentRequest', 'AMAZON.PreviousIntent')
+},
+    handle(handlerInput) {
+        return handlerInput.responseBuilder
+            .speak(HELP_MESSAGE)
+            .reprompt(HELP_MESSAGE)
+            .getResponse();
     }
 };
 
@@ -544,4 +596,57 @@ function create_background_img(imgurl, title){
             title: title,
             token: "TOKEN",
         };
+}
+
+function writeToS3(nowtxt, addtxt) {
+
+    let result = new Promise((resolve, reject) => {
+
+        const putParams = {
+            Bucket: dstBucket,
+            Key: 'test.txt',
+            Body: nowtxt + " \n" + addtxt,
+            ACL: 'public-read-write'
+        };
+
+        s3.putObject(putParams, function (putErr, putData) {
+            if (putErr) {
+                console.log("エラーです。")
+                console.error(putErr);
+                reject(putErr);
+            }else {
+                console.log('S3 Upload complete');
+                resolve(putData);
+            }
+        });
+        console.log("Uploading To S3")
+    });
+
+    return result;
+
+}
+
+function readFromS3() {
+    const res = {
+        statusCode: 200,
+    }
+    let result = new Promise((resolve, reject) => {
+
+        const paramsToGet = {
+            Bucket: dstBucket,
+            Key: 'test.txt'
+        };
+
+        s3.getObject(paramsToGet, function (err, data) {
+            if (err) {
+                console.log(err);
+                reject(err);
+            }else {
+                res.body = data.Body.toString();
+                resolve(data)
+            }
+        });
+
+    });
+    return result;
 }
