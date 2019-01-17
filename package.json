@@ -1,0 +1,12 @@
+{
+  "name": "alexa-skill-kit-sdk-factskill",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "alexa-sdk": "^1.0.25",
+    "ask-sdk": "^2.3.0",
+    "ask-utils": "^0.15.0",
+    "cheerio-httpcli": "^0.7.3",
+    "sync-request": "^6.0.0"
+  }
+}
