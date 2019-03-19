@@ -1,0 +1,403 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "半田市の観光情報",
+            "intents": [
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": [
+                        "やっぱなし",
+                        "ええわ",
+                        "いいわ",
+                        "もうええよ",
+                        "もうええわ",
+                        "フィニッシュ",
+                        "やめ",
+                        "やめて"
+                    ]
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": [
+                        "もういちど",
+                        "もう一度",
+                        "どうやる",
+                        "どうなる",
+                        "どうする",
+                        "どうすればいい",
+                        "何ができる",
+                        "どうしよう",
+                        "わからない",
+                        "ヘルプ",
+                        "助けて"
+                    ]
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": [
+                        "おしまい",
+                        "終われ",
+                        "終わり",
+                        "ストップ"
+                    ]
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.MoreIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateSettingsIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NextIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.PageUpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.PageDownIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.PreviousIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.ScrollRightIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.ScrollDownIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.ScrollLeftIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.ScrollUpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "CategoryIntent",
+                    "slots": [
+                        {
+                            "name": "ca",
+                            "type": "Category"
+                        }
+                    ],
+                    "samples": [
+                        "{ca} 場所",
+                        "{ca} 所",
+                        "お勧め",
+                        "オススメ",
+                        "オススメの観光地を教えて",
+                        "オススメの観光スポットを教えて",
+                        "お勧めの観光スポットを教えて",
+                        "お勧めの観光地を教えて",
+                        "{ca} にオススメの場所を教えて",
+                        "{ca} のオススメを教えて",
+                        "{ca} を教えて",
+                        "{ca} "
+                    ]
+                },
+                {
+                    "name": "KankoAreaIntent",
+                    "slots": [
+                        {
+                            "name": "area",
+                            "type": "KankoArea"
+                        }
+                    ],
+                    "samples": [
+                        "{area} へ行きたい",
+                        "{area} の最寄駅",
+                        "{area} の場所はどこ",
+                        "{area} の場所を教えて",
+                        "{area} の場所",
+                        "{area} はどう行く",
+                        "{area} はどこ",
+                        "{area} はどこにある",
+                        "{area} の行き方を教えて",
+                        "{area} の行き方",
+                        "{area} はどうやっていける"
+                    ]
+                },
+                {
+                    "name": "ChoiceNumberIntent",
+                    "slots": [
+                        {
+                            "name": "number",
+                            "type": "AMAZON.NUMBER"
+                        }
+                    ],
+                    "samples": [
+                        "{number} ね",
+                        "{number} にする",
+                        "{number} にしよ",
+                        "{number} がいい",
+                        "{number} で",
+                        "{number} 番目",
+                        "{number} つ目",
+                        "{number} 番",
+                        "{number}"
+                    ]
+                },
+                {
+                    "name": "EventIntent",
+                    "slots": [],
+                    "samples": [
+                        "イベントあるかな",
+                        "イベント情報を教えて",
+                        "イベント",
+                        "イベントについて教えて"
+                    ]
+                }
+            ],
+            "types": [
+                {
+                    "name": "Category",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "カップル"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "温泉"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "観光案内"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "自然"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "体験プログラム"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "庭園"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "公園"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "博物館"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "美術館"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "郷土文化"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "歴史"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "食べる"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "遊ぶ"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "見る"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "家族連れ"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "グルメ"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "大人向け"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "子供向け"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "KankoArea",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "雁宿公園"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "旧中埜家住宅"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "SL半田市鉄道資料館"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "半田市立博物館"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "半田空の科学館"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "半田運動公園"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "半田運河"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "真古酌の薬師水"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "ベリーガーデンズ"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "市野園芸"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "澤田農園"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "榊原弱者救済所跡公園（鴉根史跡公園）"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "常楽寺"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "小栗家住宅"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "JR半田駅跨線橋"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "ＪＲ亀崎駅舎"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "新美南吉の生家"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "紺屋海道"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "神前神社"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "ごんぎつねの湯"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "新美南吉記念館"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "新美南吉の養家"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "半六庭園"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "旧中埜半六邸"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "國盛酒の文化館"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "MIZKAN MUSEUM"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "半田赤レンガ建物"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
