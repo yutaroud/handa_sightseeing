@@ -1,3 +1,4 @@
 rootkey.json
 .idea/*
-
+node_modules/*
+kanko.csv
