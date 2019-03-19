@@ -67,7 +67,7 @@ const HelloHandler = {
         if (supportsDisplay(handlerInput) ) {
         const title = '半田市観光案内';
         const backgroundImage = new Alexa.ImageHelper()
-            .addImageInstance('https://s3-ap-northeast-1.amazonaws.com/hnd-kanko/higanbana.JPG')
+            .addImageInstance('https://s3-ap-northeast-1.amazonaws.com/hnd-kanko/higanbana.jpg')
             .getImage();
         const textContent = new Alexa.RichTextContentHelper()
             .withPrimaryText('こんなことを聞いてみてください！')
@@ -190,39 +190,48 @@ const ElementSelected = {
         let speechText = "新美南吉の自筆原稿や書簡などを収蔵・展示する記念文学館。「ごんぎつね」の舞台となった地に建てられています。より詳しい情報はこちらのキューアールコードにてホームページを参照してください";
         let urlimage = "";
         let log_message = "";
+        let title = "";
         switch (handlerInput.requestEnvelope.request.token) {
             case "一番":
+                title = firstmessage;
                 speechText = first_description;
                 urlimage = firsturl;
                 break;
             case "二番":
+                title = secondmessage;
                 speechText = second_description;
                 urlimage = secondurl;
                 break;
             case "三番":
+                title = thirdmessage;
                 speechText = third_description;
                 urlimage = thirdurl;
                 break;
         }
 
-        const title = firstmessage;
         log_message = "選択されたもの" + title;
         console.log("選択されたもの" + title);
         const backgroundImage = new Alexa.ImageHelper()
             .addImageInstance(urlimage)
             .getImage();
         const token = 'TOKEN';
-        return handlerInput.responseBuilder
-            .speak(speechText)
-            .addRenderTemplateDirective({
-                type: 'BodyTemplate1',
-                backButton: 'VISIBLE',
-                backgroundImage: backgroundImage,
-                title: title,
-                token: token,
-            })
-            .withShouldEndSession(true)
-            .getResponse();
+        return new Promise((resolve) => {
+            readFromS3().then(function(result){
+                writeToS3(result.Body.toString(), log_message).then(() => {
+                    resolve(handlerInput.responseBuilder
+                        .speak(speechText)
+                        .addRenderTemplateDirective({
+                            type: 'BodyTemplate1',
+                            backButton: 'VISIBLE',
+                            backgroundImage: backgroundImage,
+                            title: title,
+                            token: token,
+                        })
+                        .withShouldEndSession(true)
+                        .getResponse());
+                });
+            });
+        });
     }
 };
 
@@ -298,23 +307,34 @@ const CategoryHandler = {
         else{
             console.log("該当のスポット無し:" + category);
             log_message = "該当のスポット無し:" + category;
-            firsturl = res[1][14];
-            firstmessage = res[1][3];
-            first_description = res[1][10];
-            secondurl = res[9][14];
-            secondmessage = res[9][3];
-            second_description = res[9][10];
-            thirdurl = res[10][14];
-            thirdmessage = res[10][3];
-            third_description = res[10][10];
+            let randoms = generate_random3();
+            const random1 = randoms[0];
+            const random2 = randoms[1];
+            const random3 = randoms[2];
+            firsturl = res[random1][14];
+            firstmessage = res[random1][3];
+            first_description = res[random1][10];
+            secondurl = res[random2][14];
+            secondmessage = res[random2][3];
+            second_description = res[random2][10];
+            thirdurl = res[random3][14];
+            thirdmessage = res[random3][3];
+            third_description = res[random3][10];
             template = create_three_images(firstmessage,secondmessage,thirdmessage,firsturl,secondurl,thirdurl);
         }
         if (supportsDisplay(handlerInput) ) {
-            return handlerInput.responseBuilder
-                .speak(message)
-                .reprompt(message)
-                .addRenderTemplateDirective(template)
-                .getResponse();
+
+            return new Promise((resolve) => {
+                readFromS3().then(function(result){
+                    writeToS3(result.Body.toString(), log_message).then(() => {
+                        resolve(handlerInput.responseBuilder
+                            .speak(message)
+                            .reprompt(message)
+                            .addRenderTemplateDirective(template)
+                            .getResponse());
+                    });
+                });
+            });
         }else{
             const output = "1番" + firstmessage + "2番" +secondmessage + "3番" + thirdmessage;
             return handlerInput.responseBuilder
@@ -359,24 +379,35 @@ const EventHandler = {
         if (supportsDisplay(handlerInput) ) {
             const title = 'イベント情報';
             const backgroundImage = new Alexa.ImageHelper()
+                .addImageInstance("https://s3-ap-northeast-1.amazonaws.com/hnd-kanko/qr/event.png")
+                .getImage();
+            const forgroundImage = new Alexa.ImageHelper()
                 .addImageInstance(result[2][0])
                 .getImage();
             const token = 'TOKEN';
             const textContent = new Alexa.RichTextContentHelper()
                 .withPrimaryText(content)
                 .getTextContent();
-            return handlerInput.responseBuilder
-                .speak(message)
-                .addRenderTemplateDirective({
-                    type: 'BodyTemplate3',
-                    backButton: 'VISIBLE',
-                    image: backgroundImage,
-                    title: title,
-                    textContent: textContent,
-                    token: token,
-                })
-                .withShouldEndSession(true)
-                .getResponse();
+
+            return new Promise((resolve) => {
+                readFromS3().then(function(result){
+                    writeToS3(result.Body.toString(), log_message).then(() => {
+                        resolve(handlerInput.responseBuilder
+                            .speak(message + "。詳しく、知りたい方は右下のQRコードを読み込んでください！他に聞きたいことがあれば、もう一度。なければストップと言ってください")
+                            .addRenderTemplateDirective({
+                                type: 'BodyTemplate3',
+                                backButton: 'VISIBLE',
+                                backgroundImage: backgroundImage,
+                                image: forgroundImage,
+                                title: title,
+                                textContent: textContent,
+                                token: token,
+                            })
+                            .reprompt("他に聞きたいことがあれば、もう一度。なければストップと言ってください")
+                            .getResponse());
+                    });
+                });
+            });
         }
         return handlerInput.responseBuilder
             .speak(message)
@@ -390,16 +421,24 @@ const ChoiceHandler = {
   },
     handle (handlerInput){
         let message = "該当のものがありませんでした。申し訳ありませんがもう一度お願いいたします。";
+        let title = "";
         const number = getSlotValueByName(handlerInput, 'number');
         let template = "";
+        let log_message = "";
         if(number == 1){
             message = first_description;
-            template = create_background_img(firsturl, firstmessage)
+            title = firstmessage;
+            log_message = "選ばれた番号:" + firstmessage;
+                template = create_background_img(firsturl, firstmessage)
         }else if(number == 2){
             message = second_description;
+            title = secondmessage;
+            log_message = "選ばれた番号:" + secondmessage;
             template = create_background_img(secondurl, secondmessage);
         }else if(number == 3){
             message = third_description;
+            title = thirdmessage;
+            log_message = "選ばれた番号:" + thirdmessage;
             template = create_background_img(thirdurl, thirdmessage);
         }
         else{
@@ -409,11 +448,17 @@ const ChoiceHandler = {
                 .getResponse();
         }
         if (supportsDisplay(handlerInput) ) {
-            return handlerInput.responseBuilder
-                .speak(message)
-                .addRenderTemplateDirective(template)
-                .withShouldEndSession(true)
-                .getResponse();
+            return new Promise((resolve) => {
+                readFromS3().then(function(result){
+                    writeToS3(result.Body.toString(), log_message).then(() => {
+                        resolve(handlerInput.responseBuilder
+                            .speak(title + "は" + message + "。他に聞きたいことがあれば、もう一度。なければストップと言ってください")
+                            .reprompt("他に聞きたいことがあれば、もう一度。なければストップと言ってください")
+                            .addRenderTemplateDirective(template)
+                            .getResponse());
+                    });
+                });
+            });
         }else{
             return handlerInput.responseBuilder
                 .speak(message)
@@ -434,7 +479,6 @@ const HelpIntentHandler = {
         return handlerInput.responseBuilder
             .speak(speechText)
             .reprompt(speechText)
-            .withSimpleCard("半田市観光案内", speechText)
             .getResponse()
     }
 };
@@ -571,7 +615,7 @@ function create_three_images(name1,name2,name3,url1,url2,url3){
 
     const title = 'オススメの観光スポット';
     const backgroundImage = new Alexa.ImageHelper()
-        .addImageInstance('https://s3-ap-northeast-1.amazonaws.com/hnd-kanko/higanbana.JPG')
+        .addImageInstance('https://s3-ap-northeast-1.amazonaws.com/hnd-kanko/higanbana.jpg')
         .getImage();
     const token = 'TOKEN';
 
@@ -598,15 +642,26 @@ function create_background_img(imgurl, title){
         };
 }
 
+return new Promise((resolve) => {
+    readFromS3().then(function(result){
+        writeToS3(result.Body.toString(), log_message).then(() => {
+            resolve(handlerInput.responseBuilder
+                .speak(message)
+                .reprompt(message)
+                .getResponse());
+        });
+    });
+});
+
 function writeToS3(nowtxt, addtxt) {
+    let timestamp = nowtime();
 
     let result = new Promise((resolve, reject) => {
 
         const putParams = {
             Bucket: dstBucket,
             Key: 'test.txt',
-            Body: nowtxt + " \n" + addtxt,
-            ACL: 'public-read-write'
+            Body: nowtxt + " \n" + addtxt + "," + timestamp
         };
 
         s3.putObject(putParams, function (putErr, putData) {
@@ -629,7 +684,7 @@ function writeToS3(nowtxt, addtxt) {
 function readFromS3() {
     const res = {
         statusCode: 200,
-    }
+    };
     let result = new Promise((resolve, reject) => {
 
         const paramsToGet = {
@@ -649,4 +704,32 @@ function readFromS3() {
 
     });
     return result;
+}
+
+function generate_random3(){
+    let randoms = [];
+    let csv_min = 1;
+    let csv_length = 28;
+
+    for(let i=0;i<3;i++){
+        while(true){
+            let tmp = Math.floor( Math.random() * (csv_length - csv_min + 1)) + csv_min;;
+            if(!randoms.includes(tmp)){
+                randoms.push(tmp);
+                break;
+            }
+        }
+    }
+    return randoms
+}
+
+function nowtime(){
+    today = new Date();
+    let year = today.getFullYear();
+    let month = today.getMonth() + 1;
+    let day = today.getDate();
+    let hour = today.getHours() + 9;
+    let minute = today.getMinutes();
+    let second = today.getSeconds();
+    return year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second
 }
